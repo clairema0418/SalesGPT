@@ -84,7 +84,7 @@ class SalesGPTAPI:
         if self.verbose:
             print("=" * 10)
             print(f"AI LOG {ai_log}")
-            
+
         if (
             self.sales_agent.conversation_history
             and "<END_OF_CALL>" in self.sales_agent.conversation_history[-1]
@@ -100,14 +100,14 @@ class SalesGPTAPI:
             if self.sales_agent.conversation_history
             else ""
         )
-        #print("AI LOG INTERMEDIATE STEPS: ", ai_log["intermediate_steps"])
+        # print("AI LOG INTERMEDIATE STEPS: ", ai_log["intermediate_steps"])
 
         if (
-            self.use_tools and 
-            "intermediate_steps" in ai_log and 
+            self.use_tools and
+            "intermediate_steps" in ai_log and
             len(ai_log["intermediate_steps"]) > 0
         ):
-            
+
             try:
                 res_str = ai_log["intermediate_steps"][0]
                 print("RES STR: ", res_str)
@@ -117,9 +117,10 @@ class SalesGPTAPI:
                     agent_action.tool_input,
                     agent_action.log,
                 )
-                actions = re.search(r"Action: (.*?)[\n]*Action Input: (.*)", log)
+                actions = re.search(
+                    r"Action: (.*?)[\n]*Action Input: (.*)", log)
                 action_input = actions.group(2)
-                action_output =  res_str[1]
+                action_output = res_str[1]
             except Exception as e:
                 print("ERROR: ", e)
                 tool, tool_input, action, action_input, action_output = (
@@ -147,6 +148,9 @@ class SalesGPTAPI:
 
     async def do_stream(self, conversation_history: [str], human_input=None):
         # TODO
+        # 取出最後10筆對話
+        conversation_history = conversation_history[-10:]
+
         current_turns = len(conversation_history) + 1
         if current_turns >= self.max_num_turns:
             print("Maximum number of turns reached - ending the conversation.")
