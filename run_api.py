@@ -1,3 +1,4 @@
+from fastapi import Header, HTTPException, Depends
 import json
 import os
 from typing import List
@@ -12,11 +13,11 @@ from pydantic import BaseModel
 from salesgpt.salesgptapi import SalesGPTAPI
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Access environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-CORS_ORIGINS = ["http://localhost:3000", 
+CORS_ORIGINS = ["http://localhost:3000",
                 "http://react-frontend:80",
                 "https://sales-gpt-frontend-git-main-filip-odysseypartns-projects.vercel.app",
                 "https://sales-gpt-frontend.vercel.app"]
@@ -34,10 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from fastapi import Header, HTTPException, Depends
 
 class AuthenticatedResponse(BaseModel):
     message: str
+
 
 def get_auth_key(authorization: str = Header(...)) -> None:
     auth_key = os.getenv("AUTH_KEY")
@@ -46,6 +47,7 @@ def get_auth_key(authorization: str = Header(...)) -> None:
     expected_header = f"Bearer {auth_key}"
     if authorization != expected_header:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 @app.get("/")
 async def say_hello():
@@ -62,10 +64,13 @@ sessions = {}
 
 @app.get("/botname", response_model=None)
 async def get_bot_name(authorization: str = Header(...)):
-    load_dotenv()
-    get_auth_key(authorization)
+    load_dotenv(override=True)
+
+    # get_auth_key(authorization)
+    print(os.environ["LANGCHAIN_SMITH_API_KEY"])
     sales_api = SalesGPTAPI(
-        config_path=os.getenv("CONFIG_PATH", "examples/example_agent_setup.json"),
+        config_path=os.getenv(
+            "CONFIG_PATH", "examples/example_agent_setup.json"),
         product_catalog=os.getenv(
             "PRODUCT_CATALOG", "examples/sample_product_catalog.txt"
         ),
@@ -94,7 +99,7 @@ async def chat_with_sales_agent(req: MessageList, stream: bool = Query(False), a
         Streaming functionality is planned but not yet available. The current implementation only supports synchronous responses.
     """
     sales_api = None
-    get_auth_key(authorization)
+    # get_auth_key(authorization)
     # print(f"Received request: {req}")
     if req.session_id in sessions:
         print("Session is found!")
@@ -104,7 +109,8 @@ async def chat_with_sales_agent(req: MessageList, stream: bool = Query(False), a
     else:
         print("Creating new session")
         sales_api = SalesGPTAPI(
-            config_path=os.getenv("CONFIG_PATH", "examples/example_agent_setup.json"),
+            config_path=os.getenv(
+                "CONFIG_PATH", "examples/example_agent_setup3.json"),
             verbose=True,
             product_catalog=os.getenv(
                 "PRODUCT_CATALOG", "examples/sample_product_catalog.txt"
@@ -120,7 +126,8 @@ async def chat_with_sales_agent(req: MessageList, stream: bool = Query(False), a
     if stream:
 
         async def stream_response():
-            stream_gen = sales_api.do_stream(req.conversation_history, req.human_say)
+            stream_gen = sales_api.do_stream(
+                req.conversation_history, req.human_say)
             async for message in stream_gen:
                 data = {"token": message}
                 yield json.dumps(data).encode("utf-8") + b"\n"

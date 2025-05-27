@@ -9,8 +9,9 @@ from langchain_community.chat_models import ChatLiteLLM
 
 from salesgpt.agents import SalesGPT
 
-load_dotenv()  # loads .env file
+load_dotenv(override=True)
 
+print(os.environ["LANGCHAIN_SMITH_API_KEY"])
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
